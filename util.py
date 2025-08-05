@@ -8,11 +8,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from openlocationcode import openlocationcode as olc
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from tqdm import tqdm
 import json
 import time
 import re
 import os
+
+options = Options()
+options.binary_location = r'C:\Users\maomao\Downloads\chrome-win64\chrome.exe'
 
 # gmaps starts their weeks on sunday
 days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -21,7 +26,7 @@ def initialise_driver():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--window-size=1920,1080")
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    driver = webdriver.Chrome(service=Service(), options=options)
     driver.implicitly_wait(5)
     return driver
 
@@ -37,81 +42,79 @@ def click(driver, elem):
 
 def extract_place(driver, features, name, link):
     try:
-        approx_ll = re.search(f'(?P<lat>-?\d+\.\d+).+?(?P<lng>-?\d+\.\d+)', link).groupdict()
+        approx_ll = re.search(r'(?P<lat>-?\d+\.\d+).+?(?P<lng>-?\d+\.\d+)', link).groupdict()
         lat = float(approx_ll["lat"])
         lng = float(approx_ll["lng"])
     except AttributeError:
         print(f"No approx latlong in URL {link} for {name}")
         return
-    try:
-        code = driver.find_element(By.CSS_SELECTOR, "button[aria-label^='Plus code:']").text
-        print(f"Plus code: {code}")
-        codeArea = olc.decode(olc.recoverNearest(code.split()[0], lat, lng))
-        lat = codeArea.latitudeCenter
-        lng = codeArea.longitudeCenter
-    except NoSuchElementException:
-        print("No plus code, latlong might be inaccurate")
-        code = None
-    except StaleElementReferenceException:
-        # Try again
-        print("Got a StaleElementReferenceException when trying to get the plus code, trying again")
-        time.sleep(.1)
-        return extract_place(driver, features, name, link)
-    driver.implicitly_wait(.1)
+
+    # Skip Plus Code entirely
+    code = None
+
+    driver.implicitly_wait(0.1)
+
+    # Address
     address = None
     try:
         address = driver.find_element(By.CSS_SELECTOR, "button[data-tooltip='Copy address']").get_attribute("aria-label").split(":")[-1].strip()
     except NoSuchElementException:
         pass
+
+    # Category
     category = None
     try:
         category = driver.find_element(By.CSS_SELECTOR, "button[jsaction='pane.rating.category']").text
     except NoSuchElementException:
         pass
+
+    # Popular Times + Live Info
     live_info = None
+    times = None
     try:
         popular = driver.find_element(By.CSS_SELECTOR, "div[aria-label^='Popular times']")
         print("Has popular times")
-        times = [[0]*24 for _ in range(7)] # 2D matrix, 7 days of the week, 24h per day
+        times = [[0]*24 for _ in range(7)]  # 7 days x 24 hours
+
         dow = 0
         hour_prev = 0
+
         for elem in driver.find_elements(By.CSS_SELECTOR, "div[aria-label*='busy']"):
             bits = elem.get_attribute("aria-label").split()
+
             if bits[0] == "%":
-                # Closed on this day
-                dow += 1
+                dow += 1  # Closed day
             elif bits[0] == "Currently":
-                print("Has live info")
-                hour += 1
+                print("Has live info, bits:", bits)
+                hour = int(bits[-3]) if bits[-3].isdigit() else hour_prev
                 live_info = {
                     "frequency": int(bits[1].rstrip("%")),
-                    "hour": hour,
+                    "hour": hour + 1,
                     "day": days[dow % 7]
                 }
-                times[dow % 7][hour] = int(bits[-2].rstrip("%"))
+                times[dow % 7][hour + 1] = int(bits[-2].rstrip("%"))
             else:
                 am_pm = bits[-1]
                 hour = int(bits[-2])
                 if hour == 12:
                     hour = 0
-                if am_pm == "pm.":
+                if am_pm == "PM.":
                     hour += 12
                 if hour < hour_prev:
                     dow += 1
                 hour_prev = hour
                 times[dow % 7][hour] = int(bits[0].rstrip("%"))
-        #pprint_times(times)
+
     except NoSuchElementException:
         print("No popular times available")
-        times = None
     except StaleElementReferenceException:
-        # Try again
-        print("Got a StaleElementReferenceException when trying to get the popular times, trying again")
-        time.sleep(.1)
+        print("StaleElementReferenceException — retrying...")
+        time.sleep(0.1)
         return extract_place(driver, features, name, link)
-    except ValueError:
-        print("Got a ValueError when trying to get the popular times")
-        times = None
+    except ValueError as e:
+        print(f"ValueError during popular times parsing: {e}")
+
+    # Build geojson feature
     feature = {
         "type": "Feature",
         "geometry": {
@@ -129,7 +132,7 @@ def extract_place(driver, features, name, link):
             "scraped_at": datetime.now().isoformat(sep=" ", timespec="seconds")
         }
     }
-    #print(feature)
+
     features[link] = feature
     driver.implicitly_wait(5)
 
@@ -194,3 +197,14 @@ def save(features, OUTFILE):
         with open(OUTFILE, "w") as f:
             json.dump(geojson, f)
         print(f"Wrote {len(features)} places")
+        
+if __name__ == "__main__":
+    OUTFILE = "output.json"
+    place_url = "https://www.google.com/maps/place/New+York+Public+Library+-+Stephen+A.+Schwarzman+Building/@40.7531823,-73.9822534,1162m/data=!3m2!1e3!4b1!4m6!3m5!1s0x89c2590099a8a8a9:0x3b51df6e509a734c!8m2!3d40.7531823!4d-73.9822534!16s%2Fm%2F03gyv_y?entry=ttu&g_ep=EgoyMDI1MDczMC4wIKXMDSoASAFQAw%3D%3D"
+
+    driver = initialise_driver()
+    driver.get(place_url)
+    features = {}
+    extract_place(driver, features, "New York Public Library - Stephen A. Schwarzman Building", place_url)
+    save(features, OUTFILE)
+    driver.quit()

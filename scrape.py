@@ -6,7 +6,7 @@ import pandas as pd
 OUTFILE = "cafes.geojson"
 df = pd.read_csv("locations.csv")
 # Ignore locations that have already been scraped
-locations = df.name[df.n_places.isna()]
+locations = df
 print(f"Have {len(locations)} locations")
 locations = iter(tqdm(locations))
 
