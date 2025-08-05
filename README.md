@@ -4,12 +4,13 @@ Python + selenium scraper to extract google maps places and popular times
 
 ## Installation
 
-- Install Google Chrome  
-- `sudo pip3 install -r requirements.txt`
+- Install Google Chrome OR change options.binary_location setting for `./util.py`
+- (Optional) create a virtual environment
+- `pip install -r requirements.txt`
 
 ## Running
 
-`./scrape.py`
+`./util.py`
 
 ## Updating existing data (much faster than scrape.py)
 
