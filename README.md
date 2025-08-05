@@ -12,6 +12,6 @@ Python + selenium scraper to extract google maps places and popular times
 
 `./util.py`
 
-## Updating existing data (much faster than scrape.py)
+## (Archive) Updating existing data
 
 `./update_populartimes_data.py`
