@@ -13,8 +13,7 @@ populartimes/
 ├── scraper.py
 ├── example_urls.csv         # Example input file (CSV with place URLs)
 ├── example_output.geojson   # Example output file (GeoJSON)
-├── .env                    # (Optional) Chrome path config
-└── __pycache__/
+└── .env                     # Enviornment path file for chrome path config
 ```
 
 ## Setup
