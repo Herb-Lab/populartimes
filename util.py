@@ -200,14 +200,3 @@ def save(features, OUTFILE):
         with open(OUTFILE, "w") as f:
             json.dump(geojson, f)
         print(f"Wrote {len(features)} places")
-        
-if __name__ == "__main__":
-    OUTFILE = "output.json"
-    place_url = "https://www.google.com/maps/place/New+York+Public+Library+-+Stephen+A.+Schwarzman+Building/@40.7531823,-73.9822534,1162m/data=!3m2!1e3!4b1!4m6!3m5!1s0x89c2590099a8a8a9:0x3b51df6e509a734c!8m2!3d40.7531823!4d-73.9822534!16s%2Fm%2F03gyv_y?entry=ttu&g_ep=EgoyMDI1MDczMC4wIKXMDSoASAFQAw%3D%3D"
-
-    driver = initialise_driver()
-    driver.get(place_url)
-    features = {}
-    extract_place(driver, features, "New York Public Library - Stephen A. Schwarzman Building", place_url)
-    save(features, OUTFILE)
-    driver.quit()

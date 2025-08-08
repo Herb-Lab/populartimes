@@ -42,7 +42,7 @@ def main():
         description="Scrape Google Maps Popular Times for a list of place URLs."
     )
     parser.add_argument("--infile", required=True, help="CSV with a 'url' column (optional 'name' column).")
-    parser.add_argument("--outfile", default="output.json", help="Path to output GeoJSON")
+    parser.add_argument("--outfile", default="output.geojson", help="Path to output GeoJSON")
     parser.add_argument("--delay", type=float, default=0.5, help="Seconds to sleep between places")
     args = parser.parse_args()
 
