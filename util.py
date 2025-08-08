@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# modified from https://github.com/UoA-eResearch/populartimes/blob/main/util.py
 from datetime import datetime
 from selenium import webdriver
 from selenium.common.exceptions import *
@@ -15,9 +15,12 @@ import json
 import time
 import re
 import os
+import dotenv
 
+dotenv.load_dotenv()
 options = Options()
-options.binary_location = r'C:\Users\maomao\Downloads\chrome-win64\chrome.exe'
+DEFAULT_CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+options.binary_location = os.getenv("CHROME_PATH", DEFAULT_CHROME_PATH)
 
 # gmaps starts their weeks on sunday
 days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -85,7 +88,7 @@ def extract_place(driver, features, name, link):
             if bits[0] == "%":
                 dow += 1  # Closed day
             elif bits[0] == "Currently":
-                print("Has live info, bits:", bits)
+                print("Has live info")
                 hour = int(bits[-3]) if bits[-3].isdigit() else hour_prev
                 live_info = {
                     "frequency": int(bits[1].rstrip("%")),
