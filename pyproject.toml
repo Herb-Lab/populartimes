@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "populartimes"
+version = "0.1.0"
+description = "A scraper for Google Maps Popular Times."
+authors = [
+    { name = "Shundong Li", email = "sli19@wpi.edu" }
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.8"
+
+dependencies = [
+    "selenium",
+    "webdriver-manager",
+    "openlocationcode",
+    "requests>2,<3",
+    "geopy>=2,<3",
+    "urllib3>=1.21,<2",
+    "tqdm",
+    "dotenv"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]

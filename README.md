@@ -24,9 +24,13 @@ populartimes/
  CHROME_PATH="C:\\Path\\To\\chrome.exe"
  ```
 
-2. *(Recommended)* Create and activate a virtual environment:
+1. *(Recommended)* Install required packages with [`uv`](https://github.com/astral-sh/uv) or manually create and activate a virtual environment:
 
  ```powershell
+ # Using uv
+ uv sync
+ 
+ # Or manually
  python -m venv .venv
  .venv\Scripts\Activate.ps1
  ```
